@@ -364,11 +364,19 @@ async def delete_multiple_articles(article_ids: List[int] = Body(...), db: Sessi
         if not article_ids:
             return {"deleted": 0}
         
-        # 記事を削除
-        deleted = db.query(Article).filter(Article.id.in_(article_ids)).delete(synchronize_session=False)
+        # 関連するarticle_keywordsテーブルのレコードを先に削除
+        # SQLAlchemyのORM削除を使用して、各記事を個別に削除する
+        deleted_count = 0
+        for article_id in article_ids:
+            article = db.query(Article).filter(Article.id == article_id).first()
+            if article:
+                # 記事を削除すると、SQLAlchemyが自動的に関連するarticle_keywordsのレコードも削除する
+                db.delete(article)
+                deleted_count += 1
+        
         db.commit()
-        logger.info(f"Deleted {deleted} articles (IDs: {article_ids})")
-        return {"deleted": deleted}
+        logger.info(f"Deleted {deleted_count} articles (IDs: {article_ids})")
+        return {"deleted": deleted_count}
     except Exception as e:
         db.rollback()
         logger.error(f"Error deleting multiple articles: {e}")
