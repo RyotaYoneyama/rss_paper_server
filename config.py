@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     
     # Email
+    email_enabled: bool = True
     email_host: str = "smtp.gmail.com"
     email_port: int = 587
     email_user: str
