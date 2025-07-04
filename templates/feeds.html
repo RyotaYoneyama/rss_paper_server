@@ -2,6 +2,54 @@
 
 {% block title %}RSS管理 - RSS要約システム{% endblock %}
 
+{% block head %}
+<style>
+    .filter-keywords-textarea {
+        min-height: 80px;
+        resize: vertical;
+        overflow-y: auto;
+        word-wrap: break-word;
+        width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+        .filter-keywords-textarea {
+            min-height: 100px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // テキストエリアの自動リサイズ機能
+        const textareas = document.querySelectorAll('.filter-keywords-textarea');
+        
+        textareas.forEach(textarea => {
+            // 初期コンテンツに基づいて高さを調整
+            adjustTextareaHeight(textarea);
+            
+            // 入力時に高さを調整
+            textarea.addEventListener('input', function() {
+                adjustTextareaHeight(this);
+            });
+            
+            // フォーカス時に高さを調整
+            textarea.addEventListener('focus', function() {
+                adjustTextareaHeight(this);
+            });
+        });
+        
+        function adjustTextareaHeight(element) {
+            // スクロールの高さに基づいて高さを調整
+            element.style.height = 'auto';
+            element.style.height = (element.scrollHeight) + 'px';
+        }
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
@@ -100,7 +148,7 @@
                                 <tr>
                                     <th>タイトル</th>
                                     <th>URL</th>
-                                    <th>フィルターキーワード</th>
+                                    <th style="width: 30%;">フィルターキーワード</th>
                                     <th>状態</th>
                                     <th>登録日</th>
                                     <th>操作</th>
@@ -122,12 +170,15 @@
                                         </a>
                                     </td>
                                     <td>
-                                        <form method="post" action="/feeds/{{ feed.id }}/update-filter" class="d-flex">
-                                            <input type="text" class="form-control form-control-sm me-2" name="filter_keywords" 
-                                                   value="{{ feed.filter_keywords or '' }}" placeholder="キーワード1 OR キーワード2 AND キーワード3">
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-save"></i>
-                                            </button>
+                                        <form method="post" action="/feeds/{{ feed.id }}/update-filter" class="d-flex flex-column w-100">
+                                            <div class="d-flex">
+                                                <textarea class="form-control form-control-sm me-2 filter-keywords-textarea" 
+                                                       name="filter_keywords" rows="4"
+                                                       placeholder="キーワード1 OR キーワード2 AND キーワード3">{{ feed.filter_keywords or '' }}</textarea>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary align-self-start">
+                                                    <i class="fas fa-save"></i>
+                                                </button>
+                                            </div>
                                         </form>
                                     </td>
                                     <td>
