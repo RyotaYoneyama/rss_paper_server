@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 import logging
 from bs4 import BeautifulSoup
 import re
+from filter_parser import FilterParser
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,6 +23,8 @@ class RSSFetcher:
         # Import summarizer here to avoid circular imports
         from summarizer import ArticleSummarizer
         self.summarizer = ArticleSummarizer()
+        # フィルターパーサーを初期化
+        self.filter_parser = FilterParser()
 
     def fetch_feed(self, feed_url: str) -> Optional[dict]:
         """Fetch RSS feed from URL"""
@@ -86,25 +89,43 @@ class RSSFetcher:
 
     def check_keywords_match(self, db: Session, title: str, description: str, feed: RSSFeed = None) -> Tuple[str, List[str]]:
         """
-        Check if title or description contains any keywords from feed-specific keywords
+        Check if title or description matches the filter expression
         Returns a tuple of (result, matching_keywords)
-        """
-        # Convert title and description to lowercase for case-insensitive matching
-        text = f"{title} {description}".lower()
-        logger.info(f"Article : {feed.filter_keywords}")
-        # Check feed-specific keywords if provided
-        matching_keywords = []
-        if feed.filter_keywords is None:
-            return "None", matching_keywords
         
-        feed_keywords = [kw.strip() for kw in feed.filter_keywords.split(',') if kw.strip()]
-        if len(feed_keywords) > 0:
+        フィルター式の構文:
+        - 単純なキーワード: "keyword"
+        - カンマ区切りのキーワード: "keyword1, keyword2" (いずれかがマッチすればOK)
+        - OR演算: "keyword1 OR keyword2" (いずれかがマッチすればOK)
+        - AND演算: "keyword1 AND keyword2" (両方がマッチする必要あり)
+        - グループ化: "(keyword1 OR keyword2) AND keyword3"
+        """
+        # タイトルと説明文を結合したテキスト
+        text = f"{title} {description}"
+        logger.info(f"Article : {feed.filter_keywords}")
+        
+        # フィルターキーワードがない場合
+        if feed.filter_keywords is None or feed.filter_keywords.strip() == '':
+            return "None", []
+        
+        try:
+            # フィルター式を解析して評価
+            matches, matching_keywords = self.filter_parser.parse_and_evaluate(feed.filter_keywords, text)
+            
+            # マッチするかどうかの結果を返す
+            result = "Match" if matches else "None"
+            return result, matching_keywords
+            
+        except Exception as e:
+            logger.error(f"フィルター式の評価中にエラーが発生しました: {e}")
+            # エラーが発生した場合は、従来の方法でフィルタリング
+            feed_keywords = [kw.strip() for kw in feed.filter_keywords.split(',') if kw.strip()]
+            matching_keywords = []
             for keyword in feed_keywords:
-                if keyword.lower() in text:
+                if keyword.lower() in text.lower():
                     matching_keywords.append(keyword)
-
-        result = "None" if len(matching_keywords) == 0 else "Match"
-        return result, matching_keywords
+            
+            result = "None" if len(matching_keywords) == 0 else "Match"
+            return result, matching_keywords
 
     def save_article(self, db: Session, feed: RSSFeed, entry: dict) -> Optional[Article]:
         """Save article to database"""

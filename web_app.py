@@ -368,8 +368,9 @@ async def articles_list(
     for k in keywords_query:
         if k[0]:  # Check if keywords is not None
             for keyword in k[0].split(','):
-                if keyword.strip() and keyword.strip() not in [k.strip() for k in keywords]:
-                    keywords.append({"name": keyword.strip()})
+                keyword_stripped = keyword.strip()
+                if keyword_stripped and keyword_stripped not in [k["name"] for k in keywords]:
+                    keywords.append({"name": keyword_stripped})
     
     # Calculate pagination
     total_pages = (total + per_page - 1) // per_page

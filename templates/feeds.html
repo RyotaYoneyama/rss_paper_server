@@ -124,7 +124,7 @@
                                     <td>
                                         <form method="post" action="/feeds/{{ feed.id }}/update-filter" class="d-flex">
                                             <input type="text" class="form-control form-control-sm me-2" name="filter_keywords" 
-                                                   value="{{ feed.filter_keywords or '' }}" placeholder="キーワード1, キーワード2, ...">
+                                                   value="{{ feed.filter_keywords or '' }}" placeholder="キーワード1 OR キーワード2 AND キーワード3">
                                             <button type="submit" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-save"></i>
                                             </button>
@@ -190,7 +190,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <h6>RSSフィードの追加方法</h6>
                         <ol>
                             <li>追加したいサイトのRSS URLを取得</li>
@@ -199,7 +199,7 @@
                             <li>自動的に記事の取得が開始されます</li>
                         </ol>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <h6>フィード管理</h6>
                         <ul>
                             <li><i class="fas fa-list text-primary"></i> 記事一覧: そのフィードの記事を表示</li>
@@ -207,6 +207,21 @@
                             <li><i class="fas fa-play text-warning"></i> 有効化: 記事の取得を再開</li>
                             <li><i class="fas fa-trash text-danger"></i> 削除: フィードと関連記事を削除</li>
                         </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>フィルターキーワードの構文</h6>
+                        <ul>
+                            <li><strong>単純なキーワード:</strong> <code>python</code></li>
+                            <li><strong>複数キーワード (OR):</strong> <code>python, javascript</code></li>
+                            <li><strong>AND演算:</strong> <code>python AND tutorial</code></li>
+                            <li><strong>OR演算:</strong> <code>python OR javascript</code></li>
+                            <li><strong>グループ化:</strong> <code>(python OR javascript) AND tutorial</code></li>
+                            <li><strong>複合条件:</strong> <code>(AI OR ML) AND (tutorial OR guide)</code></li>
+                        </ul>
+                        <p class="small text-muted mt-2">
+                            例: <code>(ワード1 OR ワード2) AND (ワード3 AND ワード4)</code><br>
+                            この場合、ワード1かワード2のどちらかが含まれ、かつワード3とワード4の両方が含まれる記事のみが取得されます。
+                        </p>
                     </div>
                 </div>
             </div>

@@ -16,9 +16,6 @@ services:
       - EMAIL_TO=${EMAIL_TO}
     depends_on:
       - db
-    volumes:
-      - ./logs:/app/logs
-      - ./data:/app/data
     restart: unless-stopped
 
   db:
@@ -28,8 +25,10 @@ services:
       - POSTGRES_USER=rss_user
       - POSTGRES_PASSWORD=rss_password
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
 
+volumes:
+  postgres_data:
