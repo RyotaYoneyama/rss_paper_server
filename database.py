@@ -5,7 +5,6 @@ from sqlalchemy.sql import func
 from datetime import datetime
 import pytz
 from config import settings
-from passlib.context import CryptContext
 
 # JSTタイムゾーンを設定
 jst = pytz.timezone('Asia/Tokyo')
@@ -70,18 +69,6 @@ class Article(Base):
 
 
 
-class User(Base):
-    __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True)
-    is_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=get_jst_now)
-    updated_at = Column(DateTime, default=get_jst_now, onupdate=get_jst_now)
-
 
 class EmailLog(Base):
     __tablename__ = "email_logs"
@@ -95,14 +82,6 @@ class EmailLog(Base):
     status = Column(String, default="sent")  # sent, failed
 
 
-# パスワードハッシュ化のためのユーティリティ
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
 
 def get_db():
     db = SessionLocal()

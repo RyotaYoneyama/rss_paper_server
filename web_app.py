@@ -1,12 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, Form, Body, Cookie, Response, status
+from fastapi import FastAPI, Depends, HTTPException, Request, Form, Body, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_, or_
-from database import get_db, Article, RSSFeed, EmailLog, User, get_password_hash
-from auth import authenticate_user, create_access_token, get_current_user, get_current_active_user, get_current_admin_user, Token
+from database import get_db, Article, RSSFeed, EmailLog
 from rss_fetcher import RSSFetcher
 from summarizer import ArticleSummarizer
 from email_sender import EmailSender
@@ -30,60 +28,13 @@ summarizer = ArticleSummarizer()
 email_sender = EmailSender()
 scheduler = TaskScheduler()
 
-# Get current user from cookie for templates
-async def get_user_from_cookie(request: Request, db: Session = Depends(get_db)):
-    try:
-        from auth import get_optional_user
-        user = await get_optional_user(request=request, db=db)
-        return user
-    except:
-        return None
-
-# Add middleware to make current_user available in all templates and redirect to login if not authenticated
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    # パスがログインページ、静的ファイル、またはAPIエンドポイントの場合は認証をスキップ
-    path = request.url.path
-    if path == "/login" or path.startswith("/static") or path.startswith("/api"):
-        return await call_next(request)
-    
-    # クッキーからトークンを取得
-    token = request.cookies.get("access_token")
-    if not token or not token.startswith("Bearer "):
-        # ログインしていない場合はログインページにリダイレクト
-        return RedirectResponse(url="/login", status_code=303)
-    
-    # トークンがある場合は通常の処理を続行
-    response = await call_next(request)
-    return response
 
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and start scheduler"""
-    from database import create_tables, get_password_hash, User, SessionLocal
+    from database import create_tables, SessionLocal
     create_tables()
-    
-    # Create default admin user if no users exist
-    db = SessionLocal()
-    try:
-        user_count = db.query(User).count()
-        if user_count == 0:
-            # Create default admin user
-            admin_user = User(
-                username="admin",
-                email="admin@example.com",
-                hashed_password=get_password_hash("admin"),
-                is_active=True,
-                is_admin=True
-            )
-            db.add(admin_user)
-            db.commit()
-            logger.info("Created default admin user (username: admin, password: admin)")
-    except Exception as e:
-        logger.error(f"Error creating default admin user: {e}")
-    finally:
-        db.close()
     
     # Start scheduler
     scheduler.start()
@@ -97,208 +48,11 @@ async def shutdown_event():
     logger.info("Application shutdown")
 
 
-# Authentication endpoints
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    """Login page"""
-    return templates.TemplateResponse("login.html", {
-        "request": request,
-        "error": None
-    })
-
-
-@app.post("/login")
-async def login(
-    request: Request,
-    response: Response,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    """Login and get access token"""
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": "ユーザー名またはパスワードが正しくありません"
-        }, status_code=400)
-    
-    if not user.is_active:
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": "このアカウントは無効化されています"
-        }, status_code=400)
-    
-    # Create access token
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    
-    # Set cookie
-    response = RedirectResponse(url="/", status_code=303)
-    response.set_cookie(
-        key="access_token",
-        value=f"Bearer {access_token}",
-        httponly=True,
-        max_age=settings.access_token_expire_minutes * 60,
-        expires=settings.access_token_expire_minutes * 60,
-    )
-    
-    return response
-
-
-@app.post("/logout")
-async def logout(response: Response):
-    """Logout and clear cookie"""
-    response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie(key="access_token")
-    return response
-
-
-# User management endpoints
-@app.get("/users", response_class=HTMLResponse)
-async def users_list(
-    request: Request,
-    current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Users management page (admin only)"""
-    users = db.query(User).order_by(desc(User.created_at)).all()
-    
-    return templates.TemplateResponse("users.html", {
-        "request": request,
-        "users": users,
-        "current_user": current_user
-    })
-
-
-@app.post("/users/add")
-async def add_user(
-    username: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    is_admin: bool = Form(False),
-    current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Add new user (admin only)"""
-    try:
-        # Check if user already exists
-        existing_user = db.query(User).filter(
-            (User.username == username) | (User.email == email)
-        ).first()
-        
-        if existing_user:
-            if existing_user.username == username:
-                raise HTTPException(status_code=400, detail="このユーザー名は既に使用されています")
-            else:
-                raise HTTPException(status_code=400, detail="このメールアドレスは既に使用されています")
-        
-        # Create new user
-        hashed_password = get_password_hash(password)
-        user = User(
-            username=username,
-            email=email,
-            hashed_password=hashed_password,
-            is_admin=is_admin
-        )
-        db.add(user)
-        db.commit()
-        
-        return RedirectResponse(url="/users", status_code=303)
-        
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/users/{user_id}/update")
-async def update_user(
-    user_id: int,
-    username: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(None),
-    is_admin: bool = Form(False),
-    current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Update user (admin only)"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
-    
-    # Check if username or email is already taken by another user
-    existing_user = db.query(User).filter(
-        (User.username == username) | (User.email == email),
-        User.id != user_id
-    ).first()
-    
-    if existing_user:
-        if existing_user.username == username:
-            raise HTTPException(status_code=400, detail="このユーザー名は既に使用されています")
-        else:
-            raise HTTPException(status_code=400, detail="このメールアドレスは既に使用されています")
-    
-    # Update user
-    user.username = username
-    user.email = email
-    if password:
-        user.hashed_password = get_password_hash(password)
-    user.is_admin = is_admin
-    
-    db.commit()
-    
-    return RedirectResponse(url="/users", status_code=303)
-
-
-@app.post("/users/{user_id}/toggle")
-async def toggle_user(
-    user_id: int,
-    current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Toggle user active status (admin only)"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
-    
-    # Prevent deactivating yourself
-    if user.id == current_user.id:
-        raise HTTPException(status_code=400, detail="自分自身を無効化することはできません")
-    
-    user.is_active = not user.is_active
-    db.commit()
-    
-    return RedirectResponse(url="/users", status_code=303)
-
-
-@app.post("/users/{user_id}/delete")
-async def delete_user(
-    user_id: int,
-    current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Delete user (admin only)"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
-    
-    # Prevent deleting yourself
-    if user.id == current_user.id:
-        raise HTTPException(status_code=400, detail="自分自身を削除することはできません")
-    
-    db.delete(user)
-    db.commit()
-    
-    return RedirectResponse(url="/users", status_code=303)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, db: Session = Depends(get_db)):
     """Home page with article list"""
-    # Get current user from cookie
-    current_user = await get_user_from_cookie(request, db)
-    
     # Get recent articles
     articles = db.query(Article).order_by(desc(Article.created_at)).limit(20).all()
     
@@ -316,8 +70,7 @@ async def home(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("home.html", {
         "request": request,
         "articles": articles,
-        "stats": stats,
-        "current_user": current_user
+        "stats": stats
     })
 
 
@@ -331,8 +84,6 @@ async def articles_list(
     db: Session = Depends(get_db)
 ):
     """Articles list with filtering"""
-    # Get current user from cookie
-    current_user = await get_user_from_cookie(request, db)
     per_page = 20
     offset = (page - 1) * per_page
     
@@ -385,16 +136,13 @@ async def articles_list(
         "total_articles": total,
         "selected_keyword": keyword,
         "selected_feed_id": feed_id,
-        "unread_only": unread_only,
-        "current_user": current_user
+        "unread_only": unread_only
     })
 
 
 @app.get("/article/{article_id}", response_class=HTMLResponse)
 async def article_detail(request: Request, article_id: int, db: Session = Depends(get_db)):
     """Article detail page"""
-    # Get current user from cookie
-    current_user = await get_user_from_cookie(request, db)
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -406,24 +154,21 @@ async def article_detail(request: Request, article_id: int, db: Session = Depend
     
     return templates.TemplateResponse("article_detail.html", {
         "request": request,
-        "article": article,
-        "current_user": current_user
+        "article": article
     })
 
 
 @app.get("/feeds", response_class=HTMLResponse)
 async def feeds_list(
     request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """RSS feeds management page"""
     feeds = db.query(RSSFeed).order_by(desc(RSSFeed.created_at)).all()
     
     return templates.TemplateResponse("feeds.html", {
         "request": request,
-        "feeds": feeds,
-        "current_user": current_user
+        "feeds": feeds
     })
 
 
@@ -434,8 +179,7 @@ async def add_feed(
     url: str = Form(...),
     title: str = Form(...),
     filter_keywords: str = Form(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Add new RSS feed"""
     try:
@@ -468,8 +212,7 @@ async def add_feed(
 async def update_feed_filter(
     feed_id: int,
     filter_keywords: str = Form(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Update feed filter keywords"""
     feed = db.query(RSSFeed).filter(RSSFeed.id == feed_id).first()
@@ -486,8 +229,7 @@ async def update_feed_filter(
 @app.post("/feeds/{feed_id}/toggle")
 async def toggle_feed(
     feed_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Toggle feed active status"""
     feed = db.query(RSSFeed).filter(RSSFeed.id == feed_id).first()
@@ -503,8 +245,7 @@ async def toggle_feed(
 @app.post("/feeds/{feed_id}/delete")
 async def delete_feed(
     feed_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Delete RSS feed"""
     feed = db.query(RSSFeed).filter(RSSFeed.id == feed_id).first()
@@ -520,8 +261,7 @@ async def delete_feed(
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_panel(
     request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user)
+    db: Session = Depends(get_db)
 ):
     """Admin panel"""
     # Get recent email logs
@@ -533,27 +273,26 @@ async def admin_panel(
     return templates.TemplateResponse("admin.html", {
         "request": request,
         "email_logs": email_logs,
-        "schedule_info": schedule_info,
-        "current_user": current_user
+        "schedule_info": schedule_info
     })
 
 
 @app.post("/admin/fetch-rss")
-async def manual_fetch_rss(current_user: User = Depends(get_current_admin_user)):
+async def manual_fetch_rss():
     """Manually trigger RSS fetch"""
     scheduler.run_manual_fetch()
     return RedirectResponse(url="/admin", status_code=303)
 
 
 @app.post("/admin/send-summary")
-async def manual_send_summary(current_user: User = Depends(get_current_admin_user)):
+async def manual_send_summary():
     """Manually trigger summary email"""
     scheduler.run_manual_summary()
     return RedirectResponse(url="/admin", status_code=303)
 
 
 @app.post("/admin/test-email")
-async def test_email(current_user: User = Depends(get_current_admin_user)):
+async def test_email():
     """Test email configuration"""
     success = email_sender.test_email_connection()
     if success:
@@ -567,7 +306,7 @@ async def test_email(current_user: User = Depends(get_current_admin_user)):
 
 
 @app.post("/admin/summarize-all")
-async def summarize_all_articles(current_user: User = Depends(get_current_admin_user)):
+async def summarize_all_articles():
     """Summarize all unsummarized articles"""
     count = summarizer.summarize_unsummarized_articles()
     logger.info(f"Summarized {count} articles")
@@ -577,8 +316,7 @@ async def summarize_all_articles(current_user: User = Depends(get_current_admin_
 @app.post("/article/{article_id}/delete")
 async def delete_article(
     article_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Delete an article"""
     article = db.query(Article).filter(Article.id == article_id).first()
@@ -597,8 +335,7 @@ async def delete_article(
 @app.post("/articles/delete-multiple")
 async def delete_multiple_articles(
     article_ids: List[int] = Body(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """選択した複数の記事を削除"""
     try:
