@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Table
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
@@ -18,14 +18,6 @@ def get_jst_now():
 engine = create_engine(settings.database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
-# Association table for many-to-many relationship between articles and keywords
-article_keywords = Table(
-    'article_keywords',
-    Base.metadata,
-    Column('article_id', Integer, ForeignKey('articles.id'), primary_key=True),
-    Column('keyword_id', Integer, ForeignKey('keywords.id'), primary_key=True)
-)
 
 
 class RSSFeed(Base):
@@ -57,6 +49,7 @@ class Article(Base):
     is_read = Column(Boolean, default=False)
     is_summarized = Column(Boolean, default=False)
     summary = Column(Text)
+    keywords = Column(Text)  # キーワードをカンマ区切りの文字列として保存
     
     # 落合フォーマットの各セクション
     top_summary = Column(Text)  # 1. どんなもの？
@@ -74,19 +67,7 @@ class Article(Base):
     
     # Relationships
     feed = relationship("RSSFeed", back_populates="articles")
-    keywords = relationship("Keyword", secondary=article_keywords, back_populates="articles")
 
-
-class Keyword(Base):
-    __tablename__ = "keywords"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=get_jst_now)
-    
-    # Relationship
-    articles = relationship("Article", secondary=article_keywords, back_populates="keywords")
 
 
 class User(Base):

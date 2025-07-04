@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_, or_
-from database import get_db, Article, RSSFeed, Keyword, EmailLog, User, get_password_hash
+from database import get_db, Article, RSSFeed, EmailLog, User, get_password_hash
 from auth import authenticate_user, create_access_token, get_current_user, get_current_active_user, get_current_admin_user, Token
 from rss_fetcher import RSSFetcher
 from summarizer import ArticleSummarizer
@@ -351,7 +351,7 @@ async def articles_list(
         query = query.filter(Article.feed_id == feed_id)
     
     if keyword:
-        query = query.join(Article.keywords).filter(Keyword.name.ilike(f"%{keyword}%"))
+        query = query.filter(Article.keywords.ilike(f"%{keyword}%"))
     
     # Get total count
     total = query.count()
@@ -362,8 +362,14 @@ async def articles_list(
     # Get feeds for filter dropdown
     feeds = db.query(RSSFeed).filter(RSSFeed.is_active == True).all()
     
-    # Get keywords for filter
-    keywords = db.query(Keyword).limit(50).all()
+    # Get unique keywords from articles for filter
+    keywords_query = db.query(Article.keywords).filter(Article.keywords != None).distinct()
+    keywords = []
+    for k in keywords_query:
+        if k[0]:  # Check if keywords is not None
+            for keyword in k[0].split(','):
+                if keyword.strip() and keyword.strip() not in [k.strip() for k in keywords]:
+                    keywords.append({"name": keyword.strip()})
     
     # Calculate pagination
     total_pages = (total + per_page - 1) // per_page
@@ -420,78 +426,6 @@ async def feeds_list(
     })
 
 
-@app.get("/keywords", response_class=HTMLResponse)
-async def keywords_list(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Keywords management page"""
-    keywords = db.query(Keyword).order_by(desc(Keyword.created_at)).all()
-    
-    return templates.TemplateResponse("keywords.html", {
-        "request": request,
-        "keywords": keywords,
-        "current_user": current_user
-    })
-
-
-@app.post("/keywords/add")
-async def add_keyword(
-    name: str = Form(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Add new keyword"""
-    try:
-        # Check if keyword already exists
-        existing_keyword = db.query(Keyword).filter(Keyword.name == name).first()
-        if existing_keyword:
-            raise HTTPException(status_code=400, detail="Keyword already exists")
-        
-        # Create new keyword
-        keyword = Keyword(name=name)
-        db.add(keyword)
-        db.commit()
-        
-        return RedirectResponse(url="/keywords", status_code=303)
-        
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/keywords/{keyword_id}/toggle")
-async def toggle_keyword(
-    keyword_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Toggle keyword active status"""
-    keyword = db.query(Keyword).filter(Keyword.id == keyword_id).first()
-    if not keyword:
-        raise HTTPException(status_code=404, detail="Keyword not found")
-    
-    keyword.is_active = not keyword.is_active
-    db.commit()
-    
-    return RedirectResponse(url="/keywords", status_code=303)
-
-
-@app.post("/keywords/{keyword_id}/delete")
-async def delete_keyword(
-    keyword_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Delete keyword"""
-    keyword = db.query(Keyword).filter(Keyword.id == keyword_id).first()
-    if not keyword:
-        raise HTTPException(status_code=404, detail="Keyword not found")
-    
-    db.delete(keyword)
-    db.commit()
-    
-    return RedirectResponse(url="/keywords", status_code=303)
 
 
 @app.post("/feeds/add")

@@ -3,8 +3,8 @@ import requests
 from datetime import datetime, timezone, timedelta
 import pytz
 from sqlalchemy.orm import Session
-from database import get_db, Article, RSSFeed, Keyword, article_keywords
-from typing import List, Optional
+from database import get_db, Article, RSSFeed
+from typing import List, Optional, Tuple
 import logging
 from bs4 import BeautifulSoup
 import re
@@ -84,10 +84,10 @@ class RSSFetcher:
             query = query.filter(Article.guid == guid)
         return query.first() is not None
 
-    def check_keywords_match(self, db: Session, title: str, description: str, feed: RSSFeed = None) -> List[Keyword]:
+    def check_keywords_match(self, db: Session, title: str, description: str, feed: RSSFeed = None) -> Tuple[str, List[str]]:
         """
-        Check if title or description contains any keywords from the database or feed-specific keywords
-        Returns a list of matching keywords
+        Check if title or description contains any keywords from feed-specific keywords
+        Returns a tuple of (result, matching_keywords)
         """
         # Convert title and description to lowercase for case-insensitive matching
         text = f"{title} {description}".lower()
@@ -142,20 +142,8 @@ class RSSFetcher:
             db.add(article)
             db.flush()  # Get the article ID
 
-            # Associate matching keywords with article
-            for keyword_name in matching_keywords:
-                # キーワードが既に存在するか確認
-                existing_keyword = db.query(Keyword).filter(Keyword.name == keyword_name).first()
-                if existing_keyword:
-                    # 既存のキーワードを使用
-                    if existing_keyword not in article.keywords:
-                        article.keywords.append(existing_keyword)
-                else:
-                    # 新しいキーワードを作成
-                    new_keyword = Keyword(name=keyword_name, is_active=True)
-                    db.add(new_keyword)
-                    db.flush()  # IDを取得するためにflush
-                    article.keywords.append(new_keyword)
+            # キーワードをカンマ区切りの文字列として保存
+            article.keywords = ','.join(matching_keywords)
 
             # Create summary immediately after saving
             logger.info(f"Creating summary for new article: {title}")

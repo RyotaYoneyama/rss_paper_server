@@ -61,8 +61,8 @@
                 {% if article.keywords %}
                 <div class="mb-3">
                     <strong>キーワード:</strong>
-                    {% for keyword in article.keywords %}
-                        <span class="badge bg-secondary keyword-badge me-1">{{ keyword.name }}</span>
+                    {% for keyword in article.keywords.split(',') %}
+                        <span class="badge bg-secondary keyword-badge me-1">{{ keyword.strip() }}</span>
                     {% endfor %}
                 </div>
                 {% endif %}

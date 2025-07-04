@@ -274,11 +274,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             {% if article.keywords %}
                             <div class="mt-2">
-                                {% for keyword in article.keywords[:3] %}
-                                    <span class="badge bg-secondary keyword-badge me-1">{{ keyword.name }}</span>
+                                {% set keyword_list = article.keywords.split(',') %}
+                                {% for keyword in keyword_list[:3] %}
+                                    <span class="badge bg-secondary keyword-badge me-1">{{ keyword.strip() }}</span>
                                 {% endfor %}
-                                {% if article.keywords|length > 3 %}
-                                    <span class="badge bg-light text-dark keyword-badge">+{{ article.keywords|length - 3 }}</span>
+                                {% if keyword_list|length > 3 %}
+                                    <span class="badge bg-light text-dark keyword-badge">+{{ keyword_list|length - 3 }}</span>
                                 {% endif %}
                             </div>
                             {% endif %}
