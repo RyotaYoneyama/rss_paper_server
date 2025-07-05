@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 import logging
 from bs4 import BeautifulSoup
 import re
+import json
 from filter_parser import FilterParser
 
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +59,60 @@ class RSSFetcher:
         text = ' '.join(chunk for chunk in chunks if chunk)
         
         return text
+        
+    def extract_pdf_link(self, article_url: str) -> Optional[str]:
+        """
+        記事のURLからPDFリンクを抽出する
+        
+        多くの論文サイトでは、HTMLページ内にPDFへのリンクが含まれています。
+        このメソッドは記事ページをスクレイピングしてPDFリンクを見つけます。
+        """
+        try:
+            logger.info(f"PDFリンクを抽出しています: {article_url}")
+            
+            # 記事ページを取得
+            response = self.session.get(article_url, timeout=30)
+            response.raise_for_status()
+            
+            # HTMLをパース
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # PDFリンクを探す（一般的なパターン）
+            pdf_patterns = [
+                # href属性に.pdfを含むリンク
+                lambda s: s.find('a', href=lambda href: href and href.endswith('.pdf')),
+                # PDFダウンロードボタンなど、テキストに'PDF'を含むリンク
+                lambda s: s.find('a', text=lambda text: text and 'PDF' in text.upper()),
+                # クラス名やIDにpdfを含む要素
+                lambda s: s.find('a', class_=lambda c: c and 'pdf' in c.lower()),
+                lambda s: s.find('a', id=lambda i: i and 'pdf' in i.lower()),
+                # data-format属性がpdfのリンク（arXivなど）
+                lambda s: s.find('a', attrs={'data-format': 'pdf'}),
+                # 特定のサイト向けのパターン（arXiv）
+                lambda s: s.find('a', attrs={'title': 'Download PDF'})
+            ]
+            
+            # 各パターンを試す
+            for pattern in pdf_patterns:
+                pdf_link_element = pattern(soup)
+                if pdf_link_element and 'href' in pdf_link_element.attrs:
+                    pdf_url = pdf_link_element['href']
+                    
+                    # 相対URLの場合は絶対URLに変換
+                    if pdf_url.startswith('/'):
+                        from urllib.parse import urlparse
+                        base_url = "{0.scheme}://{0.netloc}".format(urlparse(article_url))
+                        pdf_url = base_url + pdf_url
+                    
+                    logger.info(f"PDFリンクを見つけました: {pdf_url}")
+                    return pdf_url
+            
+            logger.info(f"PDFリンクが見つかりませんでした: {article_url}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"PDFリンク抽出中にエラーが発生しました: {e}")
+            return None
 
     def parse_date(self, date_string: str) -> Optional[datetime]:
         """Parse date string to datetime object and convert to JST"""
@@ -165,6 +220,15 @@ class RSSFetcher:
 
             # キーワードをカンマ区切りの文字列として保存
             article.keywords = ','.join(matching_keywords)
+            
+            # PDFリンクを抽出して保存
+            try:
+                pdf_link = self.extract_pdf_link(link)
+                if pdf_link:
+                    article.pdf_link = pdf_link
+                    logger.info(f"PDFリンクを保存しました: {pdf_link}")
+            except Exception as e:
+                logger.error(f"PDFリンク抽出中にエラーが発生しました: {e}")
 
             # Create summary immediately after saving
             logger.info(f"Creating summary for new article: {title}")

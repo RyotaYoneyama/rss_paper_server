@@ -49,6 +49,8 @@ class Article(Base):
     is_summarized = Column(Boolean, default=False)
     summary = Column(Text)
     keywords = Column(Text)  # キーワードをカンマ区切りの文字列として保存
+    pdf_link = Column(String)  # PDFへのリンク
+    image_urls = Column(Text)  # 画像URLをJSON形式で保存
     
     # 落合フォーマットの各セクション
     top_summary = Column(Text)  # 1. どんなもの？

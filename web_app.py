@@ -12,6 +12,7 @@ from scheduler import TaskScheduler
 from typing import List, Optional
 from datetime import datetime, timedelta
 import logging
+import json
 from config import settings
 
 logging.basicConfig(level=logging.INFO)
@@ -152,9 +153,33 @@ async def article_detail(request: Request, article_id: int, db: Session = Depend
         article.is_read = True
         db.commit()
     
+    # PDFリンクがあり、画像が抽出されていない場合は画像を抽出
+    if article.pdf_link and not article.image_urls:
+        from summarizer import ArticleSummarizer
+        summarizer = ArticleSummarizer()
+        summarizer.process_article_images(article_id)
+        # 最新の状態を取得
+        article = db.query(Article).filter(Article.id == article_id).first()
+    
+    # 画像データの処理
+    images = []
+    if article.image_urls:
+        try:
+            images_data = json.loads(article.image_urls)
+            for img in images_data:
+                images.append({
+                    "data": img["data"],
+                    "mime_type": img["mime_type"],
+                    "width": img["width"],
+                    "height": img["height"]
+                })
+        except Exception as e:
+            logger.error(f"画像データの解析中にエラーが発生しました: {e}")
+    
     return templates.TemplateResponse("article_detail.html", {
         "request": request,
-        "article": article
+        "article": article,
+        "images": images
     })
 
 

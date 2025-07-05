@@ -28,6 +28,23 @@ def update_schema():
         logger.info("keywordsテーブルを削除します...")
         conn.execute(text("DROP TABLE IF EXISTS keywords"))
         
+        # 3. articlesテーブルに新しいカラムを追加
+        logger.info("articlesテーブルに新しいカラムを追加します...")
+        
+        # pdf_linkカラムの追加
+        try:
+            conn.execute(text("ALTER TABLE articles ADD COLUMN IF NOT EXISTS pdf_link TEXT"))
+            logger.info("pdf_linkカラムを追加しました")
+        except Exception as e:
+            logger.warning(f"pdf_linkカラムの追加中にエラーが発生しました: {e}")
+        
+        # image_urlsカラムの追加
+        try:
+            conn.execute(text("ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_urls TEXT"))
+            logger.info("image_urlsカラムを追加しました")
+        except Exception as e:
+            logger.warning(f"image_urlsカラムの追加中にエラーが発生しました: {e}")
+        
         # トランザクションをコミット
         trans.commit()
         logger.info("データベーススキーマの更新が完了しました")

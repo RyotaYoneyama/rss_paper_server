@@ -21,3 +21,5 @@ pytz==2023.3
 passlib==1.7.4
 python-jose==3.3.0
 bcrypt==4.0.1
+PyMuPDF 
+Pillow
