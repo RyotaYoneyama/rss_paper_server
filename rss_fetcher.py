@@ -89,9 +89,15 @@ class RSSFetcher:
                 # data-format属性がpdfのリンク（arXivなど）
                 lambda s: s.find('a', attrs={'data-format': 'pdf'}),
                 # 特定のサイト向けのパターン（arXiv）
-                lambda s: s.find('a', attrs={'title': 'Download PDF'})
+                lambda s: s.find('a', attrs={'title': 'Download PDF'}),
+                # href属性にpdfを含むリンク（arXiv新パターン）
+                lambda s: s.find('a', href=lambda href: href and 'pdf' in href.lower()),
+                # テキストが"View PDF"のリンク（arXiv新パターン）
+                lambda s: s.find('a', text=lambda text: text and 'View PDF' in text),
+                # class属性にdownload-pdfを含むリンク（arXiv新パターン）
+                lambda s: s.find('a', class_=lambda c: c and 'download-pdf' in c)
             ]
-            
+
             # 各パターンを試す
             for pattern in pdf_patterns:
                 pdf_link_element = pattern(soup)
