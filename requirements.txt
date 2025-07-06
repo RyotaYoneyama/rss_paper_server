@@ -26,3 +26,4 @@ pdf2image==1.17.0
 layoutparser==0.3.4
 torch==2.7.1
 pytesseract==0.3.13
+effdet==0.4.1

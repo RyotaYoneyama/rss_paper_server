@@ -212,9 +212,12 @@ class FigureExtractor:
                         })
 
                         if len(extracted_images) >= max_images:
-                            logger.info(f"最大画像数に達しました: {max_images}")
                             break
-                
+
+                    if len(extracted_images) >= max_images:
+                        logger.info(f"最大画像数に達しました: {max_images}")
+                        break
+
         except Exception as e:
             logger.error(f"PDFの処理中にエラーが発生しました: {e}")
         
