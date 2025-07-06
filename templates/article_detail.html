@@ -81,13 +81,13 @@
                     <h5>論文の図表</h5>
                     <div class="row">
                         {% for image in images %}
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 mb-3">
                             <div class="card">
                                 <div class="card-body p-2">
                                     <img src="data:{{ image.mime_type }};base64,{{ image.data }}" 
                                          class="img-fluid" 
                                          alt="論文の図表 {{ loop.index }}"
-                                         style="max-height: 300px; width: auto; margin: 0 auto; display: block;">
+                                         style="max-height: 500px; width: auto; margin: 0 auto; display: block;">
                                 </div>
                                 <div class="card-footer p-2 text-center">
                                     <small class="text-muted">図表 {{ loop.index }}</small>
