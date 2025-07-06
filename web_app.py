@@ -7,6 +7,7 @@ from sqlalchemy import desc, and_, or_
 from database import get_db, Article, RSSFeed, EmailLog
 from rss_fetcher import RSSFetcher
 from summarizer import ArticleSummarizer
+from figure_extractor import FigureExtractor
 from email_sender import EmailSender
 from scheduler import TaskScheduler
 from typing import List, Optional
@@ -26,6 +27,7 @@ templates = Jinja2Templates(directory="templates")
 # Initialize components
 rss_fetcher = RSSFetcher()
 summarizer = ArticleSummarizer()
+figure_extractor = FigureExtractor()
 email_sender = EmailSender()
 scheduler = TaskScheduler()
 
@@ -155,9 +157,7 @@ async def article_detail(request: Request, article_id: int, db: Session = Depend
     
     # PDFリンクがあり、画像が抽出されていない場合は画像を抽出
     if article.pdf_link and not article.image_urls:
-        from summarizer import ArticleSummarizer
-        summarizer = ArticleSummarizer()
-        summarizer.process_article_images(article_id)
+        figure_extractor.process_article_images(article_id)
         # 最新の状態を取得
         article = db.query(Article).filter(Article.id == article_id).first()
     

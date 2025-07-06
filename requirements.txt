@@ -21,5 +21,8 @@ pytz==2023.3
 passlib==1.7.4
 python-jose==3.3.0
 bcrypt==4.0.1
-PyMuPDF 
 Pillow
+pdf2image==1.17.0
+layoutparser==0.3.4
+torch==2.7.1
+pytesseract==0.3.13
