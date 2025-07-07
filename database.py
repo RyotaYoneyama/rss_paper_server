@@ -99,4 +99,4 @@ def create_tables():
 
 if __name__ == "__main__":
     create_tables()
-    logger.info("Database tables created successfully!")
+    print("Database tables created successfully!")

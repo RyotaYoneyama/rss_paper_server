@@ -250,4 +250,4 @@ URL: {article.link}
 if __name__ == "__main__":
     summarizer = ArticleSummarizer()
     content = summarizer.summarize_unread_articles()
-    logger.info(content)
+    print(content)

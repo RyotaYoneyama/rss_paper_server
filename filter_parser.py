@@ -14,7 +14,8 @@ class FilterParser:
     - AND演算: "keyword1 AND keyword2"
     - グループ化: "(keyword1 OR keyword2) AND keyword3"
     
-    大文字小文字は区別しません。
+    注意: 論理演算子は大文字の"AND"と"OR"のみ認識されます。
+    小文字の"and"や"or"はキーワードの一部として扱われます。
     """
     
     def __init__(self):
@@ -95,7 +96,7 @@ class FilterParser:
         """
         left = self.parse_term()
         
-        while self.current_token and self.current_token.upper() == 'OR':
+        while self.current_token and self.current_token == 'OR':
             self.get_next_token()  # 'OR'をスキップ
             right = self.parse_term()
             left = {'type': 'OR', 'left': left, 'right': right}
@@ -106,7 +107,7 @@ class FilterParser:
         """項を解析する"""
         left = self.parse_factor()
         
-        while self.current_token and self.current_token.upper() == 'AND':
+        while self.current_token and self.current_token == 'AND':
             self.get_next_token()  # 'AND'をスキップ
             right = self.parse_factor()
             left = {'type': 'AND', 'left': left, 'right': right}
@@ -130,7 +131,7 @@ class FilterParser:
             return expression
         
         # キーワード
-        if self.current_token.upper() not in ['AND', 'OR', '(', ')']:
+        if self.current_token not in ['AND', 'OR', '(', ')']:
             keyword = self.current_token
             self.get_next_token()
             return {'type': 'KEYWORD', 'value': keyword}
@@ -256,17 +257,17 @@ if __name__ == "__main__":
     parser = FilterParser()
     
     # 単純なキーワード
-    logger.info(parser.parse_and_evaluate("python", "This is a Python tutorial"))  # True, ['python']
+    print(parser.parse_and_evaluate("python", "This is a Python tutorial"))  # True, ['python']
     
     # OR演算
-    logger.info(parser.parse_and_evaluate("python OR javascript", "This is a Python tutorial"))  # True, ['python']
-    logger.info(parser.parse_and_evaluate("python OR javascript", "This is a JavaScript tutorial"))  # True, ['javascript']
+    print(parser.parse_and_evaluate("python OR javascript", "This is a Python tutorial"))  # True, ['python']
+    print(parser.parse_and_evaluate("python OR javascript", "This is a JavaScript tutorial"))  # True, ['javascript']
     
     # AND演算
-    logger.info(parser.parse_and_evaluate("python AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
-    logger.info(parser.parse_and_evaluate("python AND javascript", "This is a Python tutorial"))  # False, []
+    print(parser.parse_and_evaluate("python AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
+    print(parser.parse_and_evaluate("python AND javascript", "This is a Python tutorial"))  # False, []
     
     # グループ化
-    logger.info(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
-    logger.info(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a JavaScript tutorial"))  # True, ['javascript', 'tutorial']
-    logger.info(parser.parse_and_evaluate("(python OR javascript) AND (tutorial OR guide)", "This is a JavaScript guide"))  # True, ['javascript', 'guide']
+    print(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
+    print(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a JavaScript tutorial"))  # True, ['javascript', 'tutorial']
+    print(parser.parse_and_evaluate("(python OR javascript) AND (tutorial OR guide)", "This is a JavaScript guide"))  # True, ['javascript', 'guide']

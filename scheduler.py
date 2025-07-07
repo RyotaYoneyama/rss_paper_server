@@ -186,13 +186,13 @@ if __name__ == "__main__":
         # Start scheduler
         thread = scheduler.start()
         
-        logger.info("Scheduler is running. Press Ctrl+C to stop.")
+        print("Scheduler is running. Press Ctrl+C to stop.")
         
         # Keep main thread alive
         while True:
             time.sleep(1)
             
     except KeyboardInterrupt:
-        logger.info("Stopping scheduler...")
+        print("Stopping scheduler...")
         scheduler.stop()
-        logger.info("Scheduler stopped.")
+        print("Scheduler stopped.")
