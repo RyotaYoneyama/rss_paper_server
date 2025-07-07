@@ -29,7 +29,7 @@ class FigureExtractor:
         pass
 
     def load_model(self):
-        print("[INFO] Loading layout model ...")
+        logger.info("Loading layout model ...")
         return lp.AutoLayoutModel(
             self.MODEL_NAME,
         )

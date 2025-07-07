@@ -256,17 +256,17 @@ if __name__ == "__main__":
     parser = FilterParser()
     
     # 単純なキーワード
-    print(parser.parse_and_evaluate("python", "This is a Python tutorial"))  # True, ['python']
+    logger.info(parser.parse_and_evaluate("python", "This is a Python tutorial"))  # True, ['python']
     
     # OR演算
-    print(parser.parse_and_evaluate("python OR javascript", "This is a Python tutorial"))  # True, ['python']
-    print(parser.parse_and_evaluate("python OR javascript", "This is a JavaScript tutorial"))  # True, ['javascript']
+    logger.info(parser.parse_and_evaluate("python OR javascript", "This is a Python tutorial"))  # True, ['python']
+    logger.info(parser.parse_and_evaluate("python OR javascript", "This is a JavaScript tutorial"))  # True, ['javascript']
     
     # AND演算
-    print(parser.parse_and_evaluate("python AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
-    print(parser.parse_and_evaluate("python AND javascript", "This is a Python tutorial"))  # False, []
+    logger.info(parser.parse_and_evaluate("python AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
+    logger.info(parser.parse_and_evaluate("python AND javascript", "This is a Python tutorial"))  # False, []
     
     # グループ化
-    print(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
-    print(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a JavaScript tutorial"))  # True, ['javascript', 'tutorial']
-    print(parser.parse_and_evaluate("(python OR javascript) AND (tutorial OR guide)", "This is a JavaScript guide"))  # True, ['javascript', 'guide']
+    logger.info(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a Python tutorial"))  # True, ['python', 'tutorial']
+    logger.info(parser.parse_and_evaluate("(python OR javascript) AND tutorial", "This is a JavaScript tutorial"))  # True, ['javascript', 'tutorial']
+    logger.info(parser.parse_and_evaluate("(python OR javascript) AND (tutorial OR guide)", "This is a JavaScript guide"))  # True, ['javascript', 'guide']

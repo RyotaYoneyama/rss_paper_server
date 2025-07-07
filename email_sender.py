@@ -229,7 +229,7 @@ if __name__ == "__main__":
     
     # Test connection
     if sender.test_email_connection():
-        print("Email configuration is working!")
+        logger.info("Email configuration is working!")
         
         # Send test email
         test_content = """

@@ -59,4 +59,4 @@ def update_schema():
 
 if __name__ == "__main__":
     update_schema()
-    print("データベーススキーマの更新が完了しました。")
+    logger.info("データベーススキーマの更新が完了しました。")
