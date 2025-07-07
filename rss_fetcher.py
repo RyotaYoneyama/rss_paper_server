@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 from filter_parser import FilterParser
+from figure_extractor import FigureExtractor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +27,8 @@ class RSSFetcher:
         self.summarizer = ArticleSummarizer()
         # フィルターパーサーを初期化
         self.filter_parser = FilterParser()
+        # 図抽出器を初期化
+        self.figure_extractor = FigureExtractor()
 
     def fetch_feed(self, feed_url: str) -> Optional[dict]:
         """Fetch RSS feed from URL"""
@@ -244,6 +247,12 @@ class RSSFetcher:
             
             db.commit()
             logger.info(f"Saved new article with summary: {title}")
+            
+            # サマリー作成後に画像処理を実行
+            if article.pdf_link:
+                logger.info(f"Processing images for article: {title}")
+                self.figure_extractor.process_article_images(article.id)
+            
             return article
 
         except Exception as e:
