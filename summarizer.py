@@ -46,12 +46,12 @@ URL: {article.link}
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4.1-nano",
+                model="o3-mini",
                 messages=[
-                    {"role": "system", "content": "あなたは研究論文や技術記事の要約を専門とするAIアシスタントです。落合フォーマットに従って、正確で簡潔な要約を作成してください。"},
+                    {"role": "system", "content": "あなたは研究論文や技術記事の要約を専門とするAIアシスタントです。落合フォーマットに従って、正確な要約を作成してください。"},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=2000,
+                max_tokens=5000,
                 temperature=1.0
             )
             
