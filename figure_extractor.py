@@ -171,7 +171,7 @@ class FigureExtractor:
             extracted_images = []
 
             with tempfile.TemporaryDirectory() as tmp:
-                logger.info("[INFO] Converting PDF pages to images ...")
+                logger.info("Converting PDF pages to images ...")
                 imgs = convert_from_path(temp_file_path, dpi=self.DPI, output_folder=tmp, fmt="png")
 
                 for page_idx, img in enumerate(imgs, 1):
