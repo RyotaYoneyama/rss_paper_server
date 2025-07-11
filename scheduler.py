@@ -53,30 +53,31 @@ class TaskScheduler:
             logger.error(f"Error in summary email job: {e}")
 
     def cleanup_read_articles_job(self):
-        """既読かつ1週間以上前の記事を削除"""
-        logger.info("Starting cleanup of read articles older than 1 week")
+        """既読かつ設定された日数以上前の記事を削除"""
+        days = settings.cleanup_read_articles_days
+        logger.info(f"Starting cleanup of read articles older than {days} days")
         try:
             db: Session = next(get_db())
-            one_week_ago = datetime.utcnow() - timedelta(days=7)
+            cutoff_date = datetime.utcnow() - timedelta(days=days)
             deleted = db.query(Article).filter(
                 and_(
                     Article.is_read == True,
                     Article.read_at != None,
-                    Article.read_at < one_week_ago
+                    Article.read_at < cutoff_date
                 )
             ).delete(synchronize_session=False)
             db.commit()
-            logger.info(f"Deleted {deleted} read articles older than 1 week")
+            logger.info(f"Deleted {deleted} read articles older than {days} days")
         except Exception as e:
             logger.error(f"Error in cleanup_read_articles_job: {e}")
 
     def cleanup_unread_articles_job(self):
-        """未読記事が1000件を超えた場合、古い順に削除"""
-        logger.info("Starting cleanup of unread articles if over limit")
+        """未読記事が設定された上限を超えた場合、古い順に削除"""
+        limit = settings.cleanup_unread_articles_limit
+        logger.info(f"Starting cleanup of unread articles if over limit of {limit}")
         try:
             db: Session = next(get_db())
             unread_count = db.query(Article).filter(Article.is_read == False).count()
-            limit = 1000
             if unread_count > limit:
                 to_delete = unread_count - limit
                 old_unread = db.query(Article).filter(Article.is_read == False).order_by(Article.published_at.asc()).limit(to_delete).all()
@@ -94,48 +95,49 @@ class TaskScheduler:
         # RSS fetch every 6 hours
         schedule.every(6).hours.do(self.fetch_rss_job)
         
-        # Summary email every day at 5 AM JST
+        # Summary email every day at configured time (JST)
         import pytz
 
         def run_summary_email_jst():
             jst = pytz.timezone('Asia/Tokyo')
             now_jst = datetime.now(jst)
-            if now_jst.hour == 5 and now_jst.minute == 0:
+            if now_jst.hour == settings.summary_email_hour and now_jst.minute == settings.summary_email_minute:
                 self.send_summary_email_job()
         schedule.every().minute.do(run_summary_email_jst)
 
         def run_cleanup_read_articles_jst():
             jst = pytz.timezone('Asia/Tokyo')
             now_jst = datetime.now(jst)
-            if now_jst.hour == 3 and now_jst.minute == 0:
+            if now_jst.hour == settings.cleanup_read_articles_hour and now_jst.minute == settings.cleanup_read_articles_minute:
                 self.cleanup_read_articles_job()
         schedule.every().minute.do(run_cleanup_read_articles_jst)
 
         def run_cleanup_unread_articles_jst():
             jst = pytz.timezone('Asia/Tokyo')
             now_jst = datetime.now(jst)
-            if now_jst.hour == 3 and now_jst.minute == 10:
+            if now_jst.hour == settings.cleanup_unread_articles_hour and now_jst.minute == settings.cleanup_unread_articles_minute:
                 self.cleanup_unread_articles_job()
         schedule.every().minute.do(run_cleanup_unread_articles_jst)
 
         logger.info("Scheduled jobs configured:")
         logger.info("- RSS fetch: Every 6 hours")
-        logger.info("- Summary email: Daily at 5:00 AM JST")
-        logger.info("- Cleanup read articles: Daily at 03:00 JST")
-        logger.info("- Cleanup unread articles: Daily at 03:10 JST")
+        logger.info(f"- Summary email: Daily at {settings.summary_email_hour}:{settings.summary_email_minute:02d} JST")
+        logger.info(f"- Cleanup read articles: Daily at {settings.cleanup_read_articles_hour}:{settings.cleanup_read_articles_minute:02d} JST")
+        logger.info(f"- Cleanup unread articles: Daily at {settings.cleanup_unread_articles_hour}:{settings.cleanup_unread_articles_minute:02d} JST")
 
     def run_scheduler(self):
         """Run the scheduler in a separate thread"""
         self.running = True
         logger.info("Scheduler started")
         
+        check_interval = settings.scheduler_check_interval
         while self.running:
             try:
                 schedule.run_pending()
-                time.sleep(60)  # Check every minute
+                time.sleep(check_interval)  # Check at configured interval
             except Exception as e:
                 logger.error(f"Error in scheduler: {e}")
-                time.sleep(60)
+                time.sleep(check_interval)
 
     def start(self):
         """Start the scheduler"""

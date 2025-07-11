@@ -33,7 +33,7 @@ class RSSFetcher:
     def fetch_feed(self, feed_url: str) -> Optional[dict]:
         """Fetch RSS feed from URL"""
         try:
-            response = self.session.get(feed_url, timeout=30)
+            response = self.session.get(feed_url, timeout=settings.request_timeout)
             response.raise_for_status()
             
             feed = feedparser.parse(response.content)
@@ -74,7 +74,7 @@ class RSSFetcher:
             logger.info(f"PDFリンクを抽出しています: {article_url}")
             
             # 記事ページを取得
-            response = self.session.get(article_url, timeout=30)
+            response = self.session.get(article_url, timeout=settings.request_timeout)
             response.raise_for_status()
             
             # HTMLをパース

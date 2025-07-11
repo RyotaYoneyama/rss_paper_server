@@ -51,6 +51,7 @@ cp .env.example .env
 ```bash
 # OpenAI API Key (必須)
 OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_TEMPERATURE=1.0  # 生成テキストの多様性（0.0-2.0）
 
 # メール設定 (必須)
 EMAIL_HOST=smtp.gmail.com
@@ -59,12 +60,41 @@ EMAIL_USER=your_email@gmail.com
 EMAIL_PASSWORD=your_app_password
 EMAIL_FROM=your_email@gmail.com
 EMAIL_TO=recipient@example.com
+EMAIL_LOG_CONTENT_LENGTH=1000  # ログに保存するメール内容の長さ
 
-# その他の設定 (オプション)
-MAX_ARTICLES_TO_SUMMARIZE=10
-RSS_FETCH_SCHEDULE=0 */6 * * *
-SUMMARY_EMAIL_SCHEDULE=0 7 * * *
+# スケジュール設定
+SCHEDULER_CHECK_INTERVAL=60  # スケジューラのチェック間隔（秒）
+SUMMARY_EMAIL_HOUR=5  # 要約メール送信時間（時、JST）
+SUMMARY_EMAIL_MINUTE=0  # 要約メール送信時間（分、JST）
+
+# クリーンアップ設定
+CLEANUP_READ_ARTICLES_DAYS=7  # 既読記事を削除する日数
+CLEANUP_UNREAD_ARTICLES_LIMIT=1000  # 未読記事の保持上限
+CLEANUP_READ_ARTICLES_HOUR=3  # 既読記事クリーンアップ時間（時、JST）
+CLEANUP_READ_ARTICLES_MINUTE=0  # 既読記事クリーンアップ時間（分、JST）
+CLEANUP_UNREAD_ARTICLES_HOUR=3  # 未読記事クリーンアップ時間（時、JST）
+CLEANUP_UNREAD_ARTICLES_MINUTE=10  # 未読記事クリーンアップ時間（分、JST）
+
+# 要約設定
+MAX_ARTICLES_TO_SUMMARIZE=10  # 一度に要約する最大記事数
+ARTICLE_DESCRIPTION_LIMIT=3000  # 要約時の記事説明文字数制限
+
+# ウェブアプリ設定
+ARTICLES_PER_PAGE=20  # 記事一覧の1ページあたりの表示数
+HOME_ARTICLES_LIMIT=20  # ホームページの記事表示数
+INITIAL_FEED_ARTICLES=5  # 新規フィード追加時の初期取得記事数
+STATS_DAYS_PERIOD=7  # 統計情報の期間（日）
+ADMIN_EMAIL_LOGS_LIMIT=10  # 管理画面のメールログ表示数
+
+# リクエスト設定
+REQUEST_TIMEOUT=30  # HTTP/APIリクエストのタイムアウト（秒）
 ```
+
+これらの環境変数を調整することで、システムの動作をカスタマイズできます。特に重要なのは：
+
+- `CLEANUP_UNREAD_ARTICLES_LIMIT`: 未読記事の保持上限（デフォルト1000件）
+- `CLEANUP_READ_ARTICLES_DAYS`: 既読記事を保持する期間（デフォルト7日）
+- `ARTICLE_DESCRIPTION_LIMIT`: 要約時の記事説明文字数制限（デフォルト3000文字）
 
 ### 3. Docker Composeで起動
 
@@ -120,9 +150,13 @@ docker-compose logs -f app
 ## スケジュール
 
 - **RSS取得**: 6時間ごと（デフォルト）
-- **要約メール送信**: 毎日7:00（デフォルト）
+- **要約メール送信**: 毎日5:00 JST（デフォルト）
+- **既読記事クリーンアップ**: 毎日3:00 JST（デフォルト）
+- **未読記事クリーンアップ**: 毎日3:10 JST（デフォルト）
 
-スケジュールは環境変数で変更可能です。
+すべてのスケジュールは環境変数で変更可能です。例えば：
+- `SUMMARY_EMAIL_HOUR=7` と `SUMMARY_EMAIL_MINUTE=30` で要約メールを7:30 JSTに送信
+- `CLEANUP_UNREAD_ARTICLES_LIMIT=2000` で未読記事の上限を2000件に変更
 
 ## トラブルシューティング
 
@@ -190,6 +224,13 @@ MIT License
 3. データベースログ: `docker-compose logs db`
 
 ## 更新履歴
+
+### v1.1.0
+- 環境変数による設定の柔軟化
+- ハードコードされた数値を環境変数から設定可能に変更
+- 未読記事の保持上限を設定可能に
+- 既読記事の保持期間を設定可能に
+- 各種タイムアウト値やページ表示数を設定可能に
 
 ### v1.0.0
 - 初回リリース

@@ -57,7 +57,7 @@ async def shutdown_event():
 async def home(request: Request, db: Session = Depends(get_db)):
     """Home page with article list"""
     # Get recent articles
-    articles = db.query(Article).order_by(desc(Article.created_at)).limit(20).all()
+    articles = db.query(Article).order_by(desc(Article.created_at)).limit(settings.home_articles_limit).all()
     
     # Get statistics
     total_articles = db.query(Article).count()
@@ -87,7 +87,7 @@ async def articles_list(
     db: Session = Depends(get_db)
 ):
     """Articles list with filtering"""
-    per_page = 20
+    per_page = settings.articles_per_page
     offset = (page - 1) * per_page
     
     # Build query
@@ -222,7 +222,7 @@ async def add_feed(
         try:
             feed_data = rss_fetcher.fetch_feed(url)
             if feed_data:
-                for entry in feed_data.entries[:5]:  # Limit to 5 articles for initial fetch
+                for entry in feed_data.entries[:settings.initial_feed_articles]:  # Limit to configured number of articles for initial fetch
                     rss_fetcher.save_article(db, feed, entry)
         except Exception as e:
             logger.warning(f"Could not fetch articles for new feed: {e}")
@@ -290,7 +290,7 @@ async def admin_panel(
 ):
     """Admin panel"""
     # Get recent email logs
-    email_logs = db.query(EmailLog).order_by(desc(EmailLog.sent_at)).limit(10).all()
+    email_logs = db.query(EmailLog).order_by(desc(EmailLog.sent_at)).limit(settings.admin_email_logs_limit).all()
     
     # Get schedule info
     schedule_info = scheduler.get_schedule_info()
@@ -398,9 +398,10 @@ async def get_stats(db: Session = Depends(get_db)):
     unread_articles = db.query(Article).filter(Article.is_read == False).count()
     total_feeds = db.query(RSSFeed).filter(RSSFeed.is_active == True).count()
     
-    # Articles by day (last 7 days)
-    seven_days_ago = datetime.now() - timedelta(days=7)
-    recent_articles = db.query(Article).filter(Article.created_at >= seven_days_ago).all()
+    # Articles by day (for configured period)
+    days_period = settings.stats_days_period
+    cutoff_date = datetime.now() - timedelta(days=days_period)
+    recent_articles = db.query(Article).filter(Article.created_at >= cutoff_date).all()
     
     articles_by_day = {}
     for article in recent_articles:

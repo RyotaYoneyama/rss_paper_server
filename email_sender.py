@@ -168,7 +168,7 @@ class EmailSender:
             email_log = EmailLog(
                 recipient=recipient,
                 subject=subject,
-                content=content[:1000],  # Limit content length
+                content=content[:settings.email_log_content_length],  # Limit content length
                 articles_count=articles_count,
                 status=status
             )

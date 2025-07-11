@@ -38,7 +38,7 @@ class ArticleSummarizer:
 URL: {article.link}
 
 内容:
-{article.description[:3000]}  # Limit content to avoid token limits
+{article.description[:settings.article_description_limit]}  # Limit content to avoid token limits
 
 要約は日本語で、各観点について簡潔にまとめてください。技術的な内容の場合は専門用語も適切に使用して。
 必ず各セクションを「1. どんなもの？」のように番号付きで明確に区切って。あと書き言葉で書いて。
@@ -51,7 +51,7 @@ URL: {article.link}
                     {"role": "system", "content": "あなたは研究論文や技術記事の要約を専門とするAIアシスタントです。落合フォーマットに従って、正確な要約を作成してください。"},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=1.0
+                temperature=settings.openai_temperature
             )
             
             summary = response.choices[0].message.content.strip()

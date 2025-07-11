@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     
     # OpenAI
     openai_api_key: str
+    openai_temperature: float = 1.0
     
     # Email
     email_enabled: bool = True
@@ -20,18 +21,37 @@ class Settings(BaseSettings):
     email_password: str
     email_from: str
     email_to: str
+    email_log_content_length: int = 1000
     
     # Scheduling
-    rss_fetch_schedule: str = "0 */6 * * *"  # Every 6 hours
-    summary_email_schedule: str = "0 7 * * *"  # Every day at 7 AM
+    scheduler_check_interval: int = 60  # seconds
+    cleanup_read_articles_days: int = 7  # days
+    cleanup_unread_articles_limit: int = 1000  # articles
+    cleanup_read_articles_hour: int = 3  # hour (JST)
+    cleanup_read_articles_minute: int = 0  # minute
+    cleanup_unread_articles_hour: int = 3  # hour (JST)
+    cleanup_unread_articles_minute: int = 10  # minute
+    summary_email_hour: int = 5  # hour (JST)
+    summary_email_minute: int = 0  # minute
     
     # Summary settings
     max_articles_to_summarize: int = 10
+    article_description_limit: int = 3000  # characters
     
     # App settings
     app_host: str = "0.0.0.0"
     app_port: int = 3045
     debug: bool = False
+    
+    # Web app settings
+    articles_per_page: int = 20
+    home_articles_limit: int = 20
+    initial_feed_articles: int = 5
+    stats_days_period: int = 7
+    admin_email_logs_limit: int = 10
+    
+    # Request settings
+    request_timeout: int = 30  # seconds
     
     class Config:
         env_file = ".env"
