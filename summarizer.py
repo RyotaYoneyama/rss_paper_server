@@ -129,8 +129,8 @@ URL: {article.link}
         """Get unread articles for summary email"""
         db = next(get_db())
         try:
-            # Use joinedload to eager load the keywords relationship
-            query = db.query(Article).options(joinedload(Article.keywords)).filter(Article.is_read == False)
+            # keywordsはリレーションシップではなくテキストカラムなのでjoinedloadは不要
+            query = db.query(Article).filter(Article.is_read == False)
             
             # Apply order_by before limit
             query = query.order_by(Article.published_date.desc())
