@@ -11,6 +11,7 @@ import re
 import json
 from filter_parser import FilterParser
 from figure_extractor import FigureExtractor
+from config import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
