@@ -39,17 +39,12 @@ class TaskScheduler:
             if not settings.email_enabled:
                 logger.info("Email schedule setting is disabled in settings and will not send emails.")
             else:
-                # Get summary content
-                content = self.summarizer.summarize_unread_articles()
-
-                # Count articles in content (rough estimate)
-                articles_count = content.count('## ') if '## ' in content else 0
 
                 # Send email
-                success = self.email_sender.send_daily_summary(content, articles_count)
+                success = self.email_sender.send_daily_summary()
 
                 if success:
-                    logger.info(f"Summary email sent successfully. Articles: {articles_count}")
+                    logger.info(f"Summary email sent successfully")
                 else:
                     logger.error("Failed to send summary email")
                 
