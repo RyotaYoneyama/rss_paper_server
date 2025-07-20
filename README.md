@@ -43,6 +43,11 @@ cd rss_summarizer
 # 環境変数ファイルを作成
 cp .env.example .env
 ```
+なお下記、２、３は次のスクリプトを走らすことで設定できます。
+
+```bash
+bash setup.bash
+```
 
 ### 2. 環境変数の設定
 
@@ -100,15 +105,15 @@ REQUEST_TIMEOUT=30  # HTTP/APIリクエストのタイムアウト（秒）
 
 ```bash
 # コンテナをビルド・起動
-docker-compose up -d
+docker compose up -d
 
 # ログを確認
-docker-compose logs -f app
+docker compose logs -f app
 ```
 
 ### 4. ウェブアプリにアクセス
 
-ブラウザで `http://localhost:8000` にアクセス
+ブラウザで `http://localhost:3045` にアクセス
 
 ## 使用方法
 
@@ -176,13 +181,13 @@ docker-compose logs -f app
 
 ```bash
 # データベースコンテナの状態確認
-docker-compose ps
+docker compose ps
 
 # データベースログ確認
-docker-compose logs db
+docker compose logs db
 
 # コンテナ再起動
-docker-compose restart
+docker compose restart
 ```
 
 ## 開発
@@ -194,7 +199,7 @@ docker-compose restart
 pip install -r requirements.txt
 
 # データベース起動（Docker）
-docker-compose up -d db
+docker compose up -d db
 
 # アプリケーション起動
 python main.py
@@ -219,28 +224,14 @@ MIT License
 
 問題が発生した場合は、以下を確認してください：
 
-1. Docker Composeログ: `docker-compose logs`
-2. アプリケーションログ: `docker-compose logs app`
-3. データベースログ: `docker-compose logs db`
+1. Docker Composeログ: `docker compose logs`
+2. アプリケーションログ: `docker compose logs app`
+3. データベースログ: `docker compose logs db`
 
 ## 更新履歴
 
-### v1.1.0
-- 環境変数による設定の柔軟化
-- ハードコードされた数値を環境変数から設定可能に変更
-- 未読記事の保持上限を設定可能に
-- 既読記事の保持期間を設定可能に
-- 各種タイムアウト値やページ表示数を設定可能に
-
-### v1.0.0
-- 初回リリース
-- RSS自動取得機能
-- 落合フォーマット要約機能
-- ウェブアプリUI
-- メール送信機能
-- Docker対応
-
-### TODO
+### TODO, Known Issue
+- [ ] 図、キャプション検出器の重みがローカルに落とされておらず、起動のたびに時間がかかる。
 - [ ] ディレクトリきれいにする。
 - [ ] コードきれいにする。
 - [ ] TTSの実装、お金かかるが。
