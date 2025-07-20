@@ -29,7 +29,7 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     echo "❌ Docker Composeがインストールされていません"
     echo "https://docs.docker.com/compose/install/ からDocker Composeをインストールしてください"
     exit 1
@@ -39,7 +39,7 @@ echo "✅ Docker環境が確認できました"
 
 # コンテナのビルドと起動
 echo "🔨 Dockerコンテナをビルドしています..."
-docker-compose build
+docker compose build
 
 if [ $? -ne 0 ]; then
     echo "❌ Dockerビルドに失敗しました"
@@ -47,7 +47,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "🚀 コンテナを起動しています..."
-docker-compose up -d
+docker compose up -d
 
 if [ $? -ne 0 ]; then
     echo "❌ コンテナの起動に失敗しました"
@@ -60,11 +60,11 @@ sleep 10
 
 # ヘルスチェック
 echo "🔍 サービスの状態を確認しています..."
-docker-compose ps
+docker compose ps
 
 # データベースの初期化確認
 echo "📊 データベースの初期化を確認しています..."
-docker-compose exec -T app python -c "from database import create_tables; create_tables(); print('Database tables created successfully!')"
+docker compose exec -T app python -c "from database import create_tables; create_tables(); print('Database tables created successfully!')"
 
 if [ $? -eq 0 ]; then
     echo "✅ データベースの初期化が完了しました"
@@ -84,8 +84,8 @@ echo "2. 「RSS管理」ページでRSSフィードを追加"
 echo "3. 「管理」ページでRSS取得とメール送信をテスト"
 echo ""
 echo "🔧 便利なコマンド:"
-echo "- ログ確認: docker-compose logs -f app"
-echo "- コンテナ停止: docker-compose down"
-echo "- コンテナ再起動: docker-compose restart"
+echo "- ログ確認: docker compose logs -f app"
+echo "- コンテナ停止: docker compose down"
+echo "- コンテナ再起動: docker compose restart"
 echo ""
 echo "❓ 問題が発生した場合は README.md のトラブルシューティングセクションを確認してください"
