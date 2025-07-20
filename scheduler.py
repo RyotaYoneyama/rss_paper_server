@@ -35,19 +35,23 @@ class TaskScheduler:
         """Job to send daily summary email"""
         logger.info("Starting summary email job")
         try:
-            # Get summary content
-            content = self.summarizer.summarize_unread_articles()
-            
-            # Count articles in content (rough estimate)
-            articles_count = content.count('## ') if '## ' in content else 0
-            
-            # Send email
-            success = self.email_sender.send_daily_summary(content, articles_count)
-            
-            if success:
-                logger.info(f"Summary email sent successfully. Articles: {articles_count}")
+
+            if not settings.email_enabled:
+                logger.info("Email schedule setting is disabled in settings and will not send emails.")
             else:
-                logger.error("Failed to send summary email")
+                # Get summary content
+                content = self.summarizer.summarize_unread_articles()
+
+                # Count articles in content (rough estimate)
+                articles_count = content.count('## ') if '## ' in content else 0
+
+                # Send email
+                success = self.email_sender.send_daily_summary(content, articles_count)
+
+                if success:
+                    logger.info(f"Summary email sent successfully. Articles: {articles_count}")
+                else:
+                    logger.error("Failed to send summary email")
                 
         except Exception as e:
             logger.error(f"Error in summary email job: {e}")

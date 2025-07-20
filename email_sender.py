@@ -182,9 +182,6 @@ class EmailSender:
 
     def send_daily_summary(self, content: str, articles_count: int = 0) -> bool:
         """Send daily summary email"""
-        if not settings.email_enabled:
-            logger.info("Email sending is disabled in settings")
-            return True
 
         subject = f"今日の論文要約レポート"
         to_email = settings.email_to

@@ -227,16 +227,6 @@ URL: {article.link}
         logger.info(f"Creating summary for {len(articles)} articles")
         email_content = self.create_daily_summary_email(articles)
         
-        # Mark articles as read
-        db = next(get_db())
-        try:
-            for article in articles:
-                db_article = db.query(Article).filter(Article.id == article.id).first()
-                if db_article:
-                    db_article.is_read = True
-
-            db.commit()
-            logger.info(f"Marked {len(articles)} articles as read")
         except Exception as e:
             db.rollback()
             logger.error(f"Error marking articles as read: {e}")
