@@ -83,7 +83,7 @@ async def articles_list(
     page: int = 1,
     keyword: Optional[str] = None,
     feed_id: Optional[str] = None,
-    unread_only: bool = False,
+    unread_only: bool = True,
     db: Session = Depends(get_db)
 ):
     """Articles list with filtering"""
@@ -137,7 +137,7 @@ async def articles_list(
         "current_page": page,
         "total_pages": total_pages,
         "total_articles": total,
-        "selected_keyword": keyword,
+        "selected_keyword": "", # TODO: it should be keyword, however it does not work.
         "selected_feed_id": feed_id,
         "unread_only": unread_only
     })
