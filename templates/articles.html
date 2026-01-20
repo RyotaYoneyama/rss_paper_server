@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <ul class="pagination pagination-sm mb-0">
                     {% if current_page > 1 %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ current_page - 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}{% if unread_only %}&unread_only=true{% endif %}">前</a>
+                            <a class="page-link" href="?page={{ current_page - 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}&unread_only={{ unread_only|lower }}">前</a>
                         </li>
                     {% endif %}
                     
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </li>
                         {% elif page_num <= 3 or page_num > total_pages - 3 or (page_num >= current_page - 1 and page_num <= current_page + 1) %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_num }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}{% if unread_only %}&unread_only=true{% endif %}">{{ page_num }}</a>
+                                <a class="page-link" href="?page={{ page_num }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}&unread_only={{ unread_only|lower }}">{{ page_num }}</a>
                             </li>
                         {% elif page_num == 4 or page_num == total_pages - 3 %}
                             <li class="page-item disabled">
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     {% if current_page < total_pages %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ current_page + 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}{% if unread_only %}&unread_only=true{% endif %}">次</a>
+                            <a class="page-link" href="?page={{ current_page + 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}&unread_only={{ unread_only|lower }}">次</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <ul class="pagination justify-content-center">
                 {% if current_page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ current_page - 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}{% if unread_only %}&unread_only=true{% endif %}">前</a>
+                        <a class="page-link" href="?page={{ current_page - 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}&unread_only={{ unread_only|lower }}">前</a>
                     </li>
                 {% endif %}
                 
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </li>
                     {% elif page_num <= 3 or page_num > total_pages - 3 or (page_num >= current_page - 1 and page_num <= current_page + 1) %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_num }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}{% if unread_only %}&unread_only=true{% endif %}">{{ page_num }}</a>
+                            <a class="page-link" href="?page={{ page_num }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}&unread_only={{ unread_only|lower }}">{{ page_num }}</a>
                         </li>
                     {% elif page_num == 4 or page_num == total_pages - 3 %}
                         <li class="page-item disabled">
@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 {% if current_page < total_pages %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ current_page + 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}{% if unread_only %}&unread_only=true{% endif %}">次</a>
+                        <a class="page-link" href="?page={{ current_page + 1 }}{% if selected_keyword %}&keyword={{ selected_keyword }}{% endif %}{% if selected_feed_id %}&feed_id={{ selected_feed_id }}{% endif %}&unread_only={{ unread_only|lower }}">次</a>
                     </li>
                 {% endif %}
             </ul>

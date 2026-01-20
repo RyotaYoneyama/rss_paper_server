@@ -83,7 +83,7 @@ async def articles_list(
     page: int = 1,
     keyword: Optional[str] = None,
     feed_id: Optional[str] = None,
-    unread_only: bool = True,
+    unread_only: bool = False,
     db: Session = Depends(get_db)
 ):
     """Articles list with filtering"""
