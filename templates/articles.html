@@ -93,6 +93,27 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('記事の削除中にエラーが発生しました。');
         });
     }
+
+    // 「すべての記事を削除」ボタンのクリックイベント
+    const deleteAllBtn = document.getElementById('deleteAllBtn');
+    if (deleteAllBtn) {
+        deleteAllBtn.addEventListener('click', function() {
+            if (confirm('本当にすべての記事を削除しますか？この操作は元に戻せません。')) {
+                fetch('/articles/delete-all', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(`${data.deleted}件の記事を削除しました。`);
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('記事の削除中にエラーが発生しました。');
+                });
+            }
+        });
+    }
 });
 </script>
 {% endblock %}
@@ -104,6 +125,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-newspaper"></i> 記事一覧
         </h1>
         <div>
+            <button id="deleteAllBtn" class="btn btn-danger me-2">
+                <i class="fas fa-trash"></i> すべての記事を削除
+            </button>
             <button id="deleteFilteredBtn" class="btn btn-danger me-2" style="display: none;">
                 <i class="fas fa-trash"></i> フィルター中の記事を削除
             </button>
