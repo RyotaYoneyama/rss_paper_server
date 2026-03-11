@@ -27,10 +27,10 @@ class ArticleSummarizer:
 以下の記事を落合フォーマットで要約してください。落合フォーマットは以下の6つの観点で構成されます：
 
 1. どんなもの？
-2. 先行研究と比べてどこがすごい？
-3. 技術や手法のキモはどこ？
-4. どうやって有効だと検証した？
-5. 議論はある？
+2. 先行研究と比べてどこがすごい（新規性）？
+3. 技術や手法のキモはどこ（手法の詳細）？
+4. どうやって有効だと検証した（実験条件・結果）？
+5. 議論はある(リミテーション等)？
 6. 次読むべき論文は？
 
 記事情報：
@@ -46,7 +46,7 @@ URL: {article.link}
 
         try:
             response = self.client.chat.completions.create(
-                model="o4-mini-2025-04-16",
+                model=settings.openai_model,
                 messages=[
                     {
                         "role": "system",
