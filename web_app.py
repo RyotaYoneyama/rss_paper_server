@@ -83,7 +83,7 @@ async def articles_list(
     page: int = 1,
     keyword: Optional[str] = None,
     feed_id: Optional[str] = None,
-    unread_only: bool = True,
+    unread_only: bool = False,
     db: Session = Depends(get_db)
 ):
     """Articles list with filtering"""
@@ -388,6 +388,20 @@ async def delete_multiple_articles(
     except Exception as e:
         db.rollback()
         logger.error(f"Error deleting multiple articles: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/articles/delete-all")
+async def delete_all_articles(db: Session = Depends(get_db)):
+    """Delete all articles from the database"""
+    try:
+        num_deleted = db.query(Article).delete()
+        db.commit()
+        logger.info(f"Deleted all articles: {num_deleted} deleted")
+        return {"deleted": num_deleted}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting all articles: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

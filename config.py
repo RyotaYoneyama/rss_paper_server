@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     
     # OpenAI
     openai_api_key: str
+    openai_model: str = "gpt-5-mini"
     openai_temperature: float = 1.0
     
     # Email

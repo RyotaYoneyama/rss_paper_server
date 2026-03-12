@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class FigureExtractor:
     # ---------- 設定 ----------
-    MODEL_NAME = "lp://efficientdet/PubLayNet"    # EfficientDet‑Lite backbone
+    MODEL_NAME = "lp://efficientdet/PubLayNet/config"    # EfficientDet‑Lite backbone
     DPI = 200                                      # 画質と速度のバランス
     PADDING_X = 20                                   # 図の切り出し余白
     PADDING_Y = 30                                   # 図の切り出し余白
